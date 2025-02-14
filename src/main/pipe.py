@@ -1,46 +1,38 @@
 import random
+
 import pygame
+
 from config import PIPE_IMAGE, SCREEN_HEIGHT
 from constants import PIPE_SPEED
 from floor import Floor
 
+
 class Pipe:
     """Representa os canos do jogo Flappy Bird."""
 
-    SPEED = PIPE_SPEED  # Velocidade de movimento dos canos
-    GAP = 150  # Espaço entre os canos
+    SPEED = PIPE_SPEED
+    GAP = 150
 
     def __init__(self, x: int):
         self.x = x
-        self.pipe_image = PIPE_IMAGE  # Apenas uma imagem, será invertida para o cano de cima
+        self.pipe_image = PIPE_IMAGE
+        self.ground_height = Floor.IMAGE.get_height()
+        self.ground_level = SCREEN_HEIGHT - self.ground_height
+        self.pipe_height = self.pipe_image.get_height()
 
-        # Altura do chão e nível
-        ground_height = Floor.IMAGE.get_height()
-        ground_level = SCREEN_HEIGHT - ground_height
+        self.MIN_HEIGHT = self.pipe_height // 4
+        self.MAX_HEIGHT = self.ground_level - self.GAP - self.pipe_height // 4
 
-        # Altura das imagens dos canos
-        pipe_height = self.pipe_image.get_height()
-
-        # Calcula os limites mínimos e máximos para a altura dos canos
-        self.MIN_HEIGHT = pipe_height // 4
-        self.MAX_HEIGHT = ground_level - self.GAP - pipe_height // 4
-
-        # Garante que MIN_HEIGHT seja menor que MAX_HEIGHT
         if self.MAX_HEIGHT <= self.MIN_HEIGHT:
-            self.MAX_HEIGHT = self.MIN_HEIGHT + 50  # Ajusta para evitar sobreposição
+            self.MAX_HEIGHT = self.MIN_HEIGHT + 50
 
-        # Define a altura aleatória dentro dos novos limites
-        self.height = random.randint(int(self.MIN_HEIGHT), int(self.MAX_HEIGHT))
-
-        # Define as posições dos canos
-        self.top_y = self.height - pipe_height
+        self.height = random.randint(self.MIN_HEIGHT, self.MAX_HEIGHT)
+        self.top_y = self.height - self.pipe_height
         self.bottom_y = self.height + self.GAP
 
-        # Cria as imagens invertidas
         self.top_pipe_image = pygame.transform.flip(self.pipe_image, False, True)
         self.bottom_pipe_image = self.pipe_image
 
-        # Define os retângulos para colisão
         self.top_rect = self.top_pipe_image.get_rect(x=self.x, y=self.top_y)
         self.bottom_rect = self.bottom_pipe_image.get_rect(x=self.x, y=self.bottom_y)
         self.passed = False
@@ -62,7 +54,9 @@ class Pipe:
         top_mask = pygame.mask.from_surface(self.top_pipe_image)
         bottom_mask = pygame.mask.from_surface(self.bottom_pipe_image)
 
+        # Deslocamento de máscara otimizado
         top_offset = (self.top_rect.x - bird.rect.x, self.top_rect.y - bird.rect.y)
         bottom_offset = (self.bottom_rect.x - bird.rect.x, self.bottom_rect.y - bird.rect.y)
 
+        # Verificação de colisão eficiente
         return bird_mask.overlap(top_mask, top_offset) or bird_mask.overlap(bottom_mask, bottom_offset)

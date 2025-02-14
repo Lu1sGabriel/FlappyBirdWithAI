@@ -6,9 +6,9 @@ from floor import Floor
 from pipe import Pipe
 
 
-def render_screen(screen, bird, pipes, floor, score):
-    """Desenha todos os elementos na tela."""
-    screen.blit(BACKGROUND_IMAGE, (0, 0))
+def render_screen(screen, background, bird, pipes, floor, score):
+    """Desenha todos os elementos na tela de forma otimizada."""
+    screen.blit(background, (0, 0))
 
     for pipe in pipes:
         pipe.draw(screen)
@@ -16,11 +16,11 @@ def render_screen(screen, bird, pipes, floor, score):
     floor.draw(screen)
     bird.draw(screen)
 
-    # Exibir pontuação na tela
+    # Exibir pontuação
     score_text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
     screen.blit(score_text, (SCREEN_WIDTH - score_text.get_width() - 10, 10))
 
-    pygame.display.flip()  # Substitui pygame.display.update()
+    pygame.display.update()  # Atualiza apenas os elementos modificados
 
 
 def run_game():
@@ -30,59 +30,56 @@ def run_game():
     pygame.display.set_caption("Flappy Bird")
     clock = pygame.time.Clock()
 
+    background = pygame.transform.scale(BACKGROUND_IMAGE, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
     bird = Bird(x=230, y=300)
     floor = Floor(y=SCREEN_HEIGHT - Floor.IMAGE.get_height())
-    pipes = [Pipe(x=700)]
+    pipes = [Pipe(x=SCREEN_WIDTH + 200)]  # Adicionando apenas um cano no início
     score = 0
     running = True
+    pipe_interval = 90  # Intervalo fixo entre os canos (frames)
+    frames_since_last_pipe = 0
 
     while running:
         clock.tick(FPS)
 
-        # Processa eventos
+        # Processamento de eventos
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 bird.jump()
 
-        # Atualiza o estado do jogo
+        # Atualiza estado do jogo
         bird.move()
         floor.move()
 
-        add_new_pipe = False
-        pipes_to_remove = []
+        # Controle de geração de canos
+        frames_since_last_pipe += 1
+        if frames_since_last_pipe >= pipe_interval:
+            pipes.append(Pipe(x=SCREEN_WIDTH + 100))  # Adiciona um novo cano a cada intervalo fixo
+            frames_since_last_pipe = 0  # Reseta o contador
 
-        for pipe in pipes:
+        # Gerenciar canos
+        for pipe in pipes[:]:  # Iteração segura sobre a lista
             pipe.move()
 
-            # Verifica se o pássaro passou pelo cano
             if not pipe.passed and bird.x > pipe.x:
                 pipe.passed = True
-                add_new_pipe = True
+                score += 1
 
-            # Verifica colisão
             if pipe.check_collision(bird):
                 running = False
 
-            # Verifica se o cano saiu da tela
             if pipe.x + pipe.top_pipe_image.get_width() < 0:
-                pipes_to_remove.append(pipe)
+                pipes.remove(pipe)  # Remove canos fora da tela para evitar sobrecarga
 
-        if add_new_pipe:
-            score += 1
-            pipes.append(Pipe(x=SCREEN_WIDTH))
-
-        # Remove canos que saíram da tela
-        for pipe in pipes_to_remove:
-            pipes.remove(pipe)
-
-        # Verifica se o pássaro tocou o chão ou saiu pela parte superior
+        # Verifica colisão com o chão ou topo
         if bird.y + bird.current_image.get_height() >= floor.y or bird.y < 0:
             running = False
 
-        # Renderiza a tela
-        render_screen(screen, bird, pipes, floor, score)
+        # Renderiza o jogo
+        render_screen(screen, background, bird, pipes, floor, score)
 
     pygame.quit()
 
