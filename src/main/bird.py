@@ -8,7 +8,7 @@ class Bird:
     MAX_DOWN_ROTATION = -90
     ROTATION_MULTIPLIER = -3
     ANIMATION_TIME = 5
-    JUMP_FORCE = -8.5
+    JUMP_FORCE = -8.3
     GRAVITY = 0.6
     MAX_FALL_SPEED = 10
 
