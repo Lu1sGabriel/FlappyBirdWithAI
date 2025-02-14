@@ -1,7 +1,7 @@
 import pygame
 from config import BIRD_IMAGES
 
-class Bird:
+class Bird(pygame.sprite.Sprite):
     """Representa o pássaro no jogo Flappy Bird."""
 
     MAX_UP_ROTATION = 20
@@ -13,6 +13,7 @@ class Bird:
     MAX_FALL_SPEED = 10
 
     def __init__(self, x: int, y: int):
+        super().__init__()
         self.x = x
         self.y = y
         self.vertical_speed = 0
@@ -21,28 +22,44 @@ class Bird:
         self.current_image = BIRD_IMAGES[0]
         self.rotated_image = self.current_image
         self.rect = self.current_image.get_rect(center=(self.x, self.y))
+        self._mask = pygame.mask.from_surface(self.rotated_image)
+        self.collided = False  # Adiciona o atributo collided
 
     def jump(self):
         """Faz o pássaro pular."""
-        if self.vertical_speed >= 0:  # Evita pular enquanto está subindo
+        if self.vertical_speed >= 0:
             self.vertical_speed = self.JUMP_FORCE
 
     def move(self):
         """Atualiza a posição e rotação do pássaro."""
-        self.vertical_speed = min(self.vertical_speed + self.GRAVITY, self.MAX_FALL_SPEED)
-        self.y += self.vertical_speed
+        self.apply_gravity()
+        self.update_position()
+        self.update_angle()
 
-        # Atualiza o ângulo baseado na velocidade vertical
-        self.angle = max(min(self.vertical_speed * self.ROTATION_MULTIPLIER, self.MAX_UP_ROTATION), self.MAX_DOWN_ROTATION)
+    def apply_gravity(self):
+        """Aplica a gravidade ao pássaro."""
+        self.vertical_speed = min(self.vertical_speed + self.GRAVITY, self.MAX_FALL_SPEED)
+
+    def update_position(self):
+        """Atualiza a posição do pássaro."""
+        self.y += self.vertical_speed
+        self.rect.centery = self.y
+
+    def update_angle(self):
+        """Atualiza a rotação do pássaro com base na velocidade vertical."""
+        if self.collided:
+            self.angle = -90  # Gira o pássaro de cabeça para baixo
+        else:
+            self.angle = max(min(self.vertical_speed * self.ROTATION_MULTIPLIER, self.MAX_UP_ROTATION), self.MAX_DOWN_ROTATION)
 
     def update_animation(self):
-        """Atualiza a animação de forma eficiente."""
+        """Atualiza a animação do pássaro."""
         if self.angle <= -60:
-            self.current_image = BIRD_IMAGES[1]  # Mantém as asas fixas
+            self.current_image = BIRD_IMAGES[1]
         else:
-            self.animation_counter = (self.animation_counter + 1) % (self.ANIMATION_TIME * len(BIRD_IMAGES))
-            frame_index = self.animation_counter // self.ANIMATION_TIME
+            frame_index = (self.animation_counter // self.ANIMATION_TIME) % len(BIRD_IMAGES)
             self.current_image = BIRD_IMAGES[frame_index]
+            self.animation_counter += 1
 
     def draw(self, screen: pygame.Surface):
         """Desenha o pássaro na tela."""
@@ -50,7 +67,8 @@ class Bird:
         self.rotated_image = pygame.transform.rotate(self.current_image, self.angle)
         self.rect = self.rotated_image.get_rect(center=(self.x, self.y))
         screen.blit(self.rotated_image, self.rect.topleft)
+        self._mask = pygame.mask.from_surface(self.rotated_image)
 
     def get_mask(self) -> pygame.mask.Mask:
         """Retorna a máscara para detecção de colisões."""
-        return pygame.mask.from_surface(self.rotated_image)
+        return self._mask

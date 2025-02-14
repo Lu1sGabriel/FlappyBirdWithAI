@@ -18,8 +18,10 @@ class Floor:
     def move(self):
         """Move o chão para a esquerda, criando um loop contínuo."""
         self.x_positions = [x - self.SPEED for x in self.x_positions]
+        self.reset_position_if_needed()
 
-        # Reposiciona a imagem que saiu da tela
+    def reset_position_if_needed(self):
+        """Reposiciona a imagem que saiu da tela."""
         for i in range(len(self.x_positions)):
             if self.x_positions[i] <= -self.WIDTH:
                 self.x_positions[i] = self.WIDTH - self.SPEED
