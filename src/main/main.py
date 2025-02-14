@@ -23,6 +23,7 @@ def render_screen(screen, bird, pipes, floor, score):
     pygame.display.flip()  # Substitui pygame.display.update()
 
 
+def run_game():
     """Loop principal do jogo."""
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
