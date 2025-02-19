@@ -133,7 +133,10 @@ def create_game_objects():
 
     :return: Uma tupla com a instância do pássaro, a instância do chão e a lista de canos.
     """
-    bird = Bird(x=230, y=300)
+    bird_x = SCREEN_WIDTH // 2
+    bird_y = SCREEN_HEIGHT // 2
+
+    bird = Bird(x=bird_x, y=bird_y)
     floor = Floor(y=SCREEN_HEIGHT - Floor.IMAGE.get_height())
     pipes = []
     return bird, floor, pipes

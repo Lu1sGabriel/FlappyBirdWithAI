@@ -7,8 +7,8 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 IMAGES_DIR = os.path.join(BASE_DIR, "src", "resources", "images")
 SOUNDS_DIR = os.path.join(BASE_DIR, "src", "resources", "sounds")
 
-SCREEN_WIDTH = 500
-SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 900
 FPS = 60
 
 
