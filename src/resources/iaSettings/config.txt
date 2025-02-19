@@ -1,0 +1,80 @@
+[NEAT]
+# Critérios e parâmetros da evolução
+fitness_criterion = max # Critério para maximizar a aptidão
+fitness_threshold = 1000 # Limite de aptidão para considerar o melhor indivíduo
+pop_size = 100 # Tamanho da população
+reset_on_extinction = False # Se verdadeiro, reseta a população à extinção
+
+[DefaultGenome]
+# Opções de ativação de nós
+activation_default = tanh # Função de ativação padrão
+activation_mutate_rate = 0.0 # Taxa de mutação para ativação
+activation_options = tanh # Opções de função de ativação
+
+# Opções de agregação de nós
+aggregation_default = sum # Método de agregação padrão
+aggregation_mutate_rate = 0.0 # Taxa de mutação para agregação
+aggregation_options = sum # Opções de agregação
+
+# Opções de bias de nós
+bias_init_mean = 0.0 # Média inicial do bias
+bias_init_stdev = 1.0 # Desvio padrão inicial do bias
+bias_max_value = 30.0 # Valor máximo do bias
+bias_min_value = -30.0 # Valor mínimo do bias
+bias_mutate_power = 0.5 # Poder de mutação do bias
+bias_mutate_rate = 0.7 # Taxa de mutação do bias
+bias_replace_rate = 0.1 # Taxa de substituição do bias
+
+# Opções de compatibilidade do genoma
+compatibility_disjoint_coefficient = 1.0 # Coeficiente para desajuste na compatibilidade
+compatibility_weight_coefficient   = 0.5 # Coeficiente para peso na compatibilidade
+
+# Taxas de adição/removal de conexões
+conn_add_prob = 0.5 # Probabilidade de adicionar uma conexão
+conn_delete_prob = 0.5 # Probabilidade de remover uma conexão
+
+# Opções de habilitação de conexões
+enabled_default = True # Estado padrão de habilitação de conexões
+enabled_mutate_rate = 0.01 # Taxa de mutação para habilitação de conexões
+
+feed_forward = True # Se a rede é feedforward
+initial_connection = full # Tipo de conexão inicial
+
+# Taxas de adição/removal de nós
+node_add_prob = 0.2 # Probabilidade de adicionar um nó
+node_delete_prob = 0.2 # Probabilidade de remover um nó
+
+# Parâmetros da rede
+num_hidden = 0 # Número de nós ocultos
+num_inputs = 3 # Número de entradas
+num_outputs = 1 # Número de saídas
+
+# Opções de resposta de nós
+response_init_mean = 1.0 # Média inicial da resposta
+response_init_stdev = 0.0 # Desvio padrão inicial da resposta
+response_max_value = 30.0 # Valor máximo da resposta
+response_min_value = -30.0 # Valor mínimo da resposta
+response_mutate_power = 0.0 # Poder de mutação da resposta
+response_mutate_rate = 0.0 # Taxa de mutação da resposta
+response_replace_rate = 0.0 # Taxa de substituição da resposta
+
+# Opções de peso de conexão
+weight_init_mean = 0.0 # Média inicial do peso
+weight_init_stdev = 1.0 # Desvio padrão inicial do peso
+weight_max_value = 30 # Valor máximo do peso
+weight_min_value = -30 # Valor mínimo do peso
+weight_mutate_power = 0.5 # Poder de mutação do peso
+weight_mutate_rate = 0.8 # Taxa de mutação do peso
+weight_replace_rate = 0.1 # Taxa de substituição do peso
+
+[DefaultSpeciesSet]
+compatibility_threshold = 3.0 # Limite de compatibilidade para especiação
+
+[DefaultStagnation]
+species_fitness_func = max # Função de fitness para espécies
+max_stagnation = 20 # Máximo de gerações sem melhoria
+species_elitism = 2 # Número de indivíduos elitistas por espécie
+
+[DefaultReproduction]
+elitism = 2 # Número de indivíduos elitistas na reprodução
+survival_threshold = 0.2 # Limite de sobrevivência para a próxima geração
