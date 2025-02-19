@@ -15,8 +15,8 @@ class Bird(pygame.sprite.Sprite):
     ROTATION_MULTIPLIER = -3
     ANIMATION_TIME = 5
     JUMP_FORCE = -8.5
-    GRAVITY = 0.6
-    MAX_FALL_SPEED = 10
+    GRAVITY = 0.5
+    MAX_FALL_SPEED = 12
 
     def __init__(self, x: int, y: int):
         """Inicializa uma nova instância de Bird.

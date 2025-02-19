@@ -15,7 +15,7 @@ class Pipe(pygame.sprite.Sprite):
     """
 
     SPEED = PIPE_SPEED
-    GAP = 130
+    GAP = 140
 
     def __init__(self, x: int):
         """Inicializa uma nova instância de Pipe.
@@ -47,7 +47,7 @@ class Pipe(pygame.sprite.Sprite):
 
         pipe_height = self.pipe_image.get_height()
         min_height = pipe_height // 7
-        max_height = max(min_height + 80, ground_level - self.GAP - min_height)  # Aumentada a diferença
+        max_height = max(min_height + 90, ground_level - self.GAP - min_height)  # Aumentada a diferença
 
         self.pipe_height = pipe_height
         self.min_height = min_height
@@ -61,8 +61,8 @@ class Pipe(pygame.sprite.Sprite):
         diversificar a dificuldade do jogo.
         """
         self.height = random.randint(self.min_height, self.max_height)
-        if random.random() < 0.5:
-            self.height += random.randint(-35, 35)
+        if random.random() < 0.7:
+            self.height += random.randint(-40, 40)
         self.top_y = self.height - self.pipe_height
         self.bottom_y = self.height + self.GAP
 
