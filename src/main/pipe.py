@@ -47,7 +47,7 @@ class Pipe(pygame.sprite.Sprite):
 
         pipe_height = self.pipe_image.get_height()
         min_height = pipe_height // 7
-        max_height = max(min_height + 90, ground_level - self.GAP - min_height)  # Aumentada a diferença
+        max_height = max(min_height + 80, ground_level - self.GAP - min_height)  # Aumentada a diferença
 
         self.pipe_height = pipe_height
         self.min_height = min_height
