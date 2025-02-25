@@ -13,7 +13,7 @@ from pipe import Pipe
 AI_PLAYING = True
 GENERATION = 0
 
-SCREEN_WIDTH = 600
+SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 800
 FPS = 60
 
@@ -21,10 +21,15 @@ FPS = 60
 pygame.font.init()
 POINTS_FONT = pygame.font.SysFont('arial', 50)
 
+def draw_background(screen):
+    """Draw the background to fit the screen width."""
+    background_width = BACKGROUND_IMAGE.get_width()
+    for x in range(0, SCREEN_WIDTH, background_width):
+        screen.blit(BACKGROUND_IMAGE, (x, 0))
 
 def draw_screen(screen, birds, pipes, floor, points, generation):
     """Render the game screen with birds, pipes, points, and generation."""
-    screen.blit(BACKGROUND_IMAGE, (0, 0))
+    draw_background(screen)  # Draw the dynamic background
     for bird in birds:
         bird.draw(screen)
     for pipe in pipes:
@@ -40,7 +45,6 @@ def draw_screen(screen, birds, pipes, floor, points, generation):
     floor.draw(screen)
     pygame.display.update()
 
-
 def process_events(birds):
     """Process Pygame events such as quitting and keyboard inputs."""
     for event in pygame.event.get():
@@ -50,7 +54,6 @@ def process_events(birds):
         if not AI_PLAYING and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             for bird in birds:
                 bird.jump()
-
 
 def update_birds_and_genomes(birds, networks, genomes, pipes):
     """Update the position of birds and their respective neural networks and genomes."""
@@ -65,21 +68,17 @@ def update_birds_and_genomes(birds, networks, genomes, pipes):
         if sigmoid(output[0]) > 0.5:
             bird.jump()
 
-
 def sigmoid(x):
     """Sigmoid activation function."""
     return 1 / (1 + math.exp(-x))
-
 
 def get_closest_pipe_index(bird, pipes):
     """Return the index of the pipe closest to the bird."""
     return 1 if pipes and bird.x > pipes[0].x + pipes[0].top_pipe_image.get_width() else 0
 
-
 def get_bird_input_data(bird, pipe):
     """Return input data for the bird's neural network."""
     return (bird.y, abs(bird.y - pipe.height), abs(bird.y - pipe.bottom_y), pipe.height, pipe.bottom_y)
-
 
 def initialize_genomes_and_birds(genomes, config):
     """Initialize neural networks, genomes, and birds."""
@@ -94,7 +93,6 @@ def initialize_genomes_and_birds(genomes, config):
         birds.append(Bird(230, 350))
     return networks, genome_list, birds
 
-
 def handle_bird_death(index, birds, genome_list, networks):
     """Handle bird death by removing it and updating fitness."""
     birds.pop(index)
@@ -102,7 +100,6 @@ def handle_bird_death(index, birds, genome_list, networks):
         genome_list[index].fitness -= 2  # Penalty for collision
         genome_list.pop(index)
         networks.pop(index)
-
 
 def main(genomes, config):
     """Main game function managing the logic and interaction of birds and pipes."""
@@ -157,7 +154,6 @@ def main(genomes, config):
 
         draw_screen(screen, birds, pipes, floor, points, GENERATION)
 
-
 def run(config_file):
     """Run the NEAT configuration and start the game execution."""
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
@@ -166,7 +162,6 @@ def run(config_file):
     population.add_reporter(neat.StdOutReporter(True))
     population.add_reporter(neat.StatisticsReporter())
     population.run(main)
-
 
 if __name__ == '__main__':
     path = os.path.dirname(__file__)
