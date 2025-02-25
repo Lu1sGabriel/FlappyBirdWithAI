@@ -5,7 +5,7 @@ import neat
 import pygame
 
 from bird import Bird
-from config import BACKGROUND_IMAGE
+from config import BACKGROUND_IMAGE, SCREEN_WIDTH, SCREEN_HEIGHT
 from floor import Floor
 from pipe import Pipe
 
@@ -13,8 +13,6 @@ from pipe import Pipe
 AI_PLAYING = True
 GENERATION = 0
 
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 800
 FPS = 60
 
 # Initialize Font
@@ -108,7 +106,7 @@ def main(genomes, config):
 
     networks, genome_list, birds = initialize_genomes_and_birds(genomes, config)
 
-    floor = Floor(730)
+    floor = Floor(SCREEN_HEIGHT * 0.85)
     pipes = [Pipe(SCREEN_WIDTH)]
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     points = 0
