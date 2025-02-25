@@ -1,201 +1,173 @@
-import random
+import math
+import os
+
+import neat
 import pygame
 
 from bird import Bird
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, BACKGROUND_IMAGE, SCORE_FONT, FPS, FLAP_SOUND, HIT_SOUND, POINT_SOUND, DIE_SOUND
+from config import BACKGROUND_IMAGE
 from floor import Floor
 from pipe import Pipe
 
+# Global Constants
+AI_PLAYING = True
+GENERATION = 0
+SCREEN_WIDTH = 600  # Ajuste aqui a largura desejada
+SCREEN_HEIGHT = 800
+FPS = 60
 
-def render_screen(screen, background, bird, pipes, floor, score):
-    """
-    Desenha todos os elementos na tela de forma otimizada.
+# Initialize Font
+pygame.font.init()
+POINTS_FONT = pygame.font.SysFont('arial', 50)
 
-    :param screen: Superfície onde os elementos serão desenhados.
-    :param background: Imagem de fundo da tela.
-    :param bird: Instância do pássaro que será desenhada.
-    :param pipes: Lista de canos a serem desenhados.
-    :param floor: Instância do chão a ser desenhado.
-    :param score: Pontuação atual do jogador.
-    """
-    screen.blit(background, (0, 0))
+
+def draw_screen(screen, birds, pipes, floor, points):
+    """Renderiza a tela do jogo com pássaros, canos, pontos e geração."""
+    screen.blit(BACKGROUND_IMAGE, (0, 0))
+    for bird in birds:
+        bird.draw(screen)
     for pipe in pipes:
         pipe.draw(screen)
+
+    points_text = POINTS_FONT.render(f"Points: {points}", 1, (255, 255, 255))
+    screen.blit(points_text, (SCREEN_WIDTH - 10 - points_text.get_width(), 10))
+
+    if AI_PLAYING:
+        generation_text = POINTS_FONT.render(f"Generation: {GENERATION}", 1, (255, 255, 255))
+        screen.blit(generation_text, (10, 10))
+
     floor.draw(screen)
-    bird.draw(screen)
-    score_text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
-    screen.blit(score_text, (SCREEN_WIDTH - score_text.get_width() - 10, 10))
     pygame.display.update()
 
 
-def process_events(bird, game_started):
-    """
-    Processa os eventos do jogo.
-
-    :param bird: Instância do pássaro.
-    :param game_started: Indica se o jogo foi iniciado.
-    :return: Uma tupla com o estado do jogo e a variável game_started.
-    """
+def process_events(birds):
+    """Processa eventos do Pygame, como saídas e entradas de teclado."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            return False, game_started
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            bird.jump()
-            FLAP_SOUND.play()
-            game_started = True
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            bird.jump()
-            FLAP_SOUND.play()
-            game_started = True
-    return True, game_started
+            pygame.quit()
+            quit()
+        if not AI_PLAYING and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            for bird in birds:
+                bird.jump()
 
 
-def generate_new_pipe(pipes):
-    """
-    Gera um novo cano com variação de altura aleatória.
-
-    :param pipes: Lista de canos existentes no jogo.
-    """
-    min_pipe_height = 50  # Altura mínima do cano
-    max_pipe_height = SCREEN_HEIGHT - Floor.IMAGE.get_height() - Pipe.GAP - 50  # Altura máxima do cano
-    new_pipe_height = random.randint(min_pipe_height, max_pipe_height)
-    new_pipe = Pipe(x=SCREEN_WIDTH + 100)
-    new_pipe.height = new_pipe_height
-    new_pipe.top_y = new_pipe.height - new_pipe.pipe_height
-    new_pipe.bottom_y = new_pipe.height + new_pipe.GAP
-    pipes.append(new_pipe)
-
-
-def update_game_state(bird, floor, pipes, score, frames_since_last_pipe, pipe_interval, game_started):
-    """
-    Atualiza o estado do jogo.
-
-    :param bird: Instância do pássaro.
-    :param floor: Instância do chão.
-    :param pipes: Lista de canos.
-    :param score: Pontuação atual do jogador.
-    :param frames_since_last_pipe: Contador de quadros desde o último cano gerado.
-    :param pipe_interval: Intervalo de quadros para gerar um novo cano.
-    :param game_started: Indica se o jogo foi iniciado.
-    :return: Uma tupla com o estado do jogo, a pontuação atual e os quadros desde o último cano.
-    """
-    if game_started:
+def update_birds_and_genomes(birds, networks, genomes, pipes):
+    """Atualiza a posição dos pássaros e suas respectivas redes neurais e genomas."""
+    for i, bird in enumerate(birds):
         bird.move()
-        floor.move()
+        genomes[i].fitness += 0.1  # Recompensa menor por tempo de vida
+        pipe_index = get_closest_pipe_index(bird, pipes)
+        bird_data = get_bird_input_data(bird, pipes[pipe_index])
+        bird_data += (bird.vertical_speed,)  # Adiciona a velocidade vertical do pássaro aos dados de entrada
+        output = networks[i].activate(bird_data)
 
-        frames_since_last_pipe += 1
-        if frames_since_last_pipe >= pipe_interval:
-            generate_new_pipe(pipes)
-            frames_since_last_pipe = 0
-
-        pipes_to_remove = []
-        for pipe in pipes:
-            pipe.move()
-            if not pipe.passed and bird.x > pipe.x:
-                pipe.passed = True
-                score += 1
-                POINT_SOUND.play()
-            if pipe.check_collision(bird):
-                HIT_SOUND.play()
-                DIE_SOUND.play()
-                bird.collided = True
-            if pipe.x + pipe.top_pipe_image.get_width() < 0:
-                pipes_to_remove.append(pipe)
-
-        for pipe in pipes_to_remove:
-            pipes.remove(pipe)
-
-        if bird.y + bird.current_image.get_height() >= floor.y or bird.y < 0:
-            HIT_SOUND.play()
-            DIE_SOUND.play()
-            bird.collided = True
-
-    return True, score, frames_since_last_pipe
+        # Função sigmoid para melhorar a decisão de salto
+        if sigmoid(output[0]) > 0.5:
+            bird.jump()
 
 
-def initialize_game():
-    """
-    Inicializa o jogo e retorna os objetos principais.
+def sigmoid(x):
+    """Função de ativação sigmoide."""
+    return 1 / (1 + math.exp(-x))
 
-    :return: Uma tupla com a tela, o relógio e o fundo do jogo.
-    """
-    pygame.init()
+
+def get_closest_pipe_index(bird, pipes):
+    """Retorna o índice do cano mais próximo do pássaro."""
+    return 1 if pipes and bird.x > pipes[0].x + pipes[0].top_pipe_image.get_width() else 0
+
+
+def get_bird_input_data(bird, pipe):
+    return bird.y, abs(bird.y - pipe.height), abs(bird.y - pipe.bottom_y), pipe.height, pipe.bottom_y
+
+
+def main(genomes, config):
+    """Função principal do jogo que gerencia a lógica e interação dos pássaros e canos."""
+    global GENERATION
+    GENERATION += 1
+
+    networks, genome_list, birds = initialize_genomes_and_birds(genomes, config)
+
+    floor = Floor(730)
+    pipes = [Pipe(SCREEN_WIDTH)]  # Ajustado para nova largura da tela
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Flappy Bird")
+    points = 0
     clock = pygame.time.Clock()
-    background = pygame.transform.scale(BACKGROUND_IMAGE, (SCREEN_WIDTH, SCREEN_HEIGHT))
-    return screen, clock, background
 
-
-def create_game_objects():
-    """
-    Cria os objetos principais do jogo.
-
-    :return: Uma tupla com a instância do pássaro, a instância do chão e a lista de canos.
-    """
-    bird_x = SCREEN_WIDTH // 2
-    bird_y = SCREEN_HEIGHT // 2
-
-    bird = Bird(x=bird_x, y=bird_y)
-    floor = Floor(y=SCREEN_HEIGHT - Floor.IMAGE.get_height())
-    pipes = []
-    return bird, floor, pipes
-
-
-def handle_collision(screen, background, bird, pipes, floor, score):
-    """
-    Trata a queda do pássaro após a colisão.
-
-    :param screen: Superfície onde os elementos serão desenhados.
-    :param background: Imagem de fundo da tela.
-    :param bird: Instância do pássaro que sofreu a colisão.
-    :param pipes: Lista de canos no jogo.
-    :param floor: Instância do chão.
-    :param score: Pontuação atual do jogador.
-    """
-    while bird.y + bird.current_image.get_height() < floor.y:
-        bird.y += 5
-        bird.angle = -90
-        bird.update_animation()
-        render_screen(screen, background, bird, pipes, floor, score)
-        pygame.time.delay(10)
-    HIT_SOUND.play()
-    DIE_SOUND.play()
-
-
-def run_game():
-    """
-    Loop principal do jogo.
-    """
-    screen, clock, background = initialize_game()
-    bird, floor, pipes = create_game_objects()
-    score = 0
     running = True
-    game_started = False
-    pipe_interval = 70
-    frames_since_last_pipe = 0
-
     while running:
         clock.tick(FPS)
-        running, game_started = process_events(bird, game_started)
-        if not running:
-            break
+        process_events(birds)
 
-        if game_started:
-            running, score, frames_since_last_pipe = update_game_state(bird, floor, pipes, score,
-                                                                       frames_since_last_pipe, pipe_interval,
-                                                                       game_started)
-            if bird.collided:
-                handle_collision(screen, background, bird, pipes, floor, score)
-                running = False
-        else:
-            bird.update_animation()
-            floor.move()
+        if not birds:
+            break  # Termina se não houver pássaros
 
-        render_screen(screen, background, bird, pipes, floor, score)
+        update_birds_and_genomes(birds, networks, genome_list, pipes)
 
-    pygame.quit()
+        add_pipe = False
+        remove_pipes = []
+
+        for pipe in pipes:
+            for i in range(len(birds) - 1, -1, -1):  # Itera de trás para frente
+                if pipe.check_collision(birds[i]):
+                    handle_bird_death(i, birds, genome_list, networks)
+                elif not pipe.passed and birds[i].x > pipe.x:
+                    pipe.passed = True
+                    add_pipe = True
+
+            pipe.move()
+            if pipe.x + pipe.top_pipe_image.get_width() < 0:
+                remove_pipes.append(pipe)
+
+        if add_pipe:
+            points += 1
+            pipes.append(Pipe(SCREEN_WIDTH + 100))  # Ajustado para nova largura da tela
+            for genome in genome_list:
+                genome.fitness += 6  # Recompensa por passar um cano
+
+        for pipe in remove_pipes:
+            pipes.remove(pipe)
+
+        for i in range(len(birds) - 1, -1, -1):  # Itera de trás para frente
+            if birds[i].y + birds[i].rotated_image.get_height() > floor.y or birds[i].y < 0:
+                handle_bird_death(i, birds, genome_list, networks)
+
+        draw_screen(screen, birds, pipes, floor, points)
 
 
-if __name__ == "__main__":
-    run_game()
+def initialize_genomes_and_birds(genomes, config):
+    """Inicializa as redes neurais, genomas e pássaros."""
+    networks = []
+    genome_list = []
+    birds = []
+    for _, genome in genomes:
+        network = neat.nn.FeedForwardNetwork.create(genome, config)
+        networks.append(network)
+        genome.fitness = 0
+        genome_list.append(genome)
+        birds.append(Bird(230, 350))
+    return networks, genome_list, birds
+
+
+def handle_bird_death(index, birds, genome_list, networks):
+    """Lida com a morte de um pássaro, removendo-o e atualizando o fitness."""
+    birds.pop(index)
+    if AI_PLAYING:
+        genome_list[index].fitness -= 2  # Aumenta a penalização por colisão
+        genome_list.pop(index)
+        networks.pop(index)
+
+
+def run(config_file):
+    """Executa a configuração do NEAT e inicia a execução do jogo."""
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
+                                neat.DefaultStagnation, config_file)
+    population = neat.Population(config)
+    population.add_reporter(neat.StdOutReporter(True))
+    population.add_reporter(neat.StatisticsReporter())
+    population.run(main)
+
+
+if __name__ == '__main__':
+    path = os.path.dirname(__file__)
+    config_file_path = os.path.join(path, '..', 'resources', 'iaSettings', 'config.txt')
+    run(config_file_path)

@@ -5,7 +5,6 @@ import pygame
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 IMAGES_DIR = os.path.join(BASE_DIR, "src", "resources", "images")
-SOUNDS_DIR = os.path.join(BASE_DIR, "src", "resources", "sounds")
 
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 900
@@ -44,21 +43,6 @@ def load_image(filename):
     return pygame.image.load(os.path.join(IMAGES_DIR, filename)).convert_alpha()
 
 
-def load_sound(filename, volume=0.5):
-    """Carrega um arquivo de som com um volume especificado.
-
-    Args:
-        filename: O nome do arquivo de som a ser carregado.
-        volume: O volume do som, entre 0.0 e 1.0.
-
-    Returns:
-        O objeto de som carregado.
-    """
-    sound = pygame.mixer.Sound(os.path.join(SOUNDS_DIR, filename))
-    sound.set_volume(volume)
-    return sound
-
-
 def load_images():
     """Carrega todas as imagens necessárias para o jogo.
 
@@ -75,25 +59,8 @@ def load_images():
     return bird_images, pipe_image, ground_image, background_image
 
 
-def load_sounds():
-    """Carrega todos os sons necessários para o jogo.
-
-    Retorna os sons utilizados para as ações no jogo, como flap, hit,
-    ponto e morte.
-
-    Returns:
-        tuple: Uma tupla contendo os sons de flap, hit, ponto e morte.
-    """
-    flap_sound = load_sound('flap-101soundboards.mp3', volume=0.3)
-    hit_sound = load_sound('flappy-bird-hit-sound-101soundboards.mp3', volume=0.3)
-    point_sound = load_sound('point-101soundboards.mp3', volume=0.3)
-    die_sound = load_sound('die-101soundboards.mp3', volume=0.3)
-    return flap_sound, hit_sound, point_sound, die_sound
-
-
 # Carrega as imagens e sons
 BIRD_IMAGES, PIPE_IMAGE, GROUND_IMAGE, BACKGROUND_IMAGE = load_images()
-FLAP_SOUND, HIT_SOUND, POINT_SOUND, DIE_SOUND = load_sounds()
 
 # Fonte do Jogo
 SCORE_FONT = pygame.font.SysFont('arial', 50)

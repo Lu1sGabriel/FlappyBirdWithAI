@@ -15,7 +15,7 @@ class Pipe(pygame.sprite.Sprite):
     """
 
     SPEED = PIPE_SPEED
-    GAP = 140
+    GAP = 150
 
     def __init__(self, x: int):
         """Inicializa uma nova instância de Pipe.
