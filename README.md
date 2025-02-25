@@ -1,6 +1,6 @@
 # Flappy Bird with AI
 
-![Flappy Bird with AI](https://example.com/image.png) <!-- Substitua pelo link da imagem do seu projeto -->
+![Flappy Bird with AI](https://media1.tenor.com/m/WuaZ4G33BBoAAAAC/flappy-bird-flying.gif)
 
 ## 🚀 Descrição do Projeto
 
