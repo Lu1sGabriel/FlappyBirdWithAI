@@ -5,29 +5,27 @@ import neat
 import pygame
 
 from bird import Bird
-from config import BACKGROUND_IMAGE, SCREEN_WIDTH, SCREEN_HEIGHT
+from config import BACKGROUND_IMAGE, SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from floor import Floor
 from pipe import Pipe
 
 # Global Constants
 AI_PLAYING = True
-GENERATION = 0
+generation_count = 0
 
-FPS = 60
-
-# Initialize Font
+# Inicializa a fonte
 pygame.font.init()
 POINTS_FONT = pygame.font.SysFont('arial', 50)
 
 def draw_background(screen):
-    """Draw the background to fit the screen width."""
+    """Desenha o fundo para se ajustar à largura da tela."""
     background_width = BACKGROUND_IMAGE.get_width()
     for x in range(0, SCREEN_WIDTH, background_width):
         screen.blit(BACKGROUND_IMAGE, (x, 0))
 
-def draw_screen(screen, birds, pipes, floor, points, generation):
-    """Render the game screen with birds, pipes, points, and generation."""
-    draw_background(screen)  # Draw the dynamic background
+def draw_game_screen(screen, birds, pipes, floor, points, generation):
+    """Renderiza a tela do jogo com pássaros, canos, pontos e geração."""
+    draw_background(screen)
     for bird in birds:
         bird.draw(screen)
     for pipe in pipes:
@@ -44,7 +42,7 @@ def draw_screen(screen, birds, pipes, floor, points, generation):
     pygame.display.update()
 
 def process_events(birds):
-    """Process Pygame events such as quitting and keyboard inputs."""
+    """Processa eventos do Pygame, como sair e entradas do teclado."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -54,32 +52,32 @@ def process_events(birds):
                 bird.jump()
 
 def update_birds_and_genomes(birds, networks, genomes, pipes):
-    """Update the position of birds and their respective neural networks and genomes."""
+    """Atualiza a posição dos pássaros e suas respectivas redes neurais e genomas."""
     for i, bird in enumerate(birds):
         bird.move()
-        genomes[i].fitness += 0.1  # Reward for staying alive
-        pipe_index = get_closest_pipe_index(bird, pipes)
-        bird_data = get_bird_input_data(bird, pipes[pipe_index])
-        bird_data += (bird.vertical_speed,)  # Add vertical speed to input data
-        output = networks[i].activate(bird_data)
+        genomes[i].fitness += 0.1  # Recompensa por permanecer vivo
+        closest_pipe_index = get_closest_pipe_index(bird, pipes)
+        bird_input_data = get_bird_input_data(bird, pipes[closest_pipe_index])
+        bird_input_data += (bird.vertical_speed,)  # Adiciona a velocidade vertical aos dados de entrada
+        output = networks[i].activate(bird_input_data)
 
         if sigmoid(output[0]) > 0.5:
             bird.jump()
 
 def sigmoid(x):
-    """Sigmoid activation function."""
+    """Função de ativação sigmoide."""
     return 1 / (1 + math.exp(-x))
 
 def get_closest_pipe_index(bird, pipes):
-    """Return the index of the pipe closest to the bird."""
+    """Retorna o índice do cano mais próximo do pássaro."""
     return 1 if pipes and bird.x > pipes[0].x + pipes[0].top_pipe_image.get_width() else 0
 
 def get_bird_input_data(bird, pipe):
-    """Return input data for the bird's neural network."""
+    """Retorna os dados de entrada para a rede neural do pássaro."""
     return (bird.y, abs(bird.y - pipe.height), abs(bird.y - pipe.bottom_y), pipe.height, pipe.bottom_y)
 
 def initialize_genomes_and_birds(genomes, config):
-    """Initialize neural networks, genomes, and birds."""
+    """Inicializa redes neurais, genomas e pássaros."""
     networks = []
     genome_list = []
     birds = []
@@ -92,17 +90,17 @@ def initialize_genomes_and_birds(genomes, config):
     return networks, genome_list, birds
 
 def handle_bird_death(index, birds, genome_list, networks):
-    """Handle bird death by removing it and updating fitness."""
+    """Lida com a morte do pássaro removendo-o e atualizando a aptidão."""
     birds.pop(index)
     if AI_PLAYING:
-        genome_list[index].fitness -= 2  # Penalty for collision
+        genome_list[index].fitness -= 2  # Penalidade por colisão
         genome_list.pop(index)
         networks.pop(index)
 
 def main(genomes, config):
-    """Main game function managing the logic and interaction of birds and pipes."""
-    global GENERATION
-    GENERATION += 1
+    """Função principal do jogo gerenciando a lógica e a interação entre pássaros e canos."""
+    global generation_count
+    generation_count += 1
 
     networks, genome_list, birds = initialize_genomes_and_birds(genomes, config)
 
@@ -118,7 +116,7 @@ def main(genomes, config):
         process_events(birds)
 
         if not birds:
-            break  # End if no birds are left
+            break  # Encerra se não houver pássaros restantes
 
         update_birds_and_genomes(birds, networks, genome_list, pipes)
 
@@ -126,7 +124,7 @@ def main(genomes, config):
         remove_pipes = []
 
         for pipe in pipes:
-            for i in range(len(birds) - 1, -1, -1):  # Iterate from back to front
+            for i in range(len(birds) - 1, -1, -1):  # Itera de trás para frente
                 if pipe.check_collision(birds[i]):
                     handle_bird_death(i, birds, genome_list, networks)
                 elif not pipe.passed and birds[i].x > pipe.x:
@@ -141,19 +139,19 @@ def main(genomes, config):
             points += 1
             pipes.append(Pipe(SCREEN_WIDTH + 100))
             for genome in genome_list:
-                genome.fitness += 6  # Reward for passing a pipe
+                genome.fitness += 6  # Recompensa por passar um cano
 
         for pipe in remove_pipes:
             pipes.remove(pipe)
 
-        for i in range(len(birds) - 1, -1, -1):  # Iterate from back to front
+        for i in range(len(birds) - 1, -1, -1):  # Itera de trás para frente
             if birds[i].y + birds[i].rotated_image.get_height() > floor.y or birds[i].y < 0:
                 handle_bird_death(i, birds, genome_list, networks)
 
-        draw_screen(screen, birds, pipes, floor, points, GENERATION)
+        draw_game_screen(screen, birds, pipes, floor, points, generation_count)
 
 def run(config_file):
-    """Run the NEAT configuration and start the game execution."""
+    """Executa a configuração do NEAT e inicia a execução do jogo."""
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                 neat.DefaultStagnation, config_file)
     population = neat.Population(config)
